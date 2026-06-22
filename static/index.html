@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="AI Text Generator — Generate, rewrite, summarize, and expand text using Llama 3.3 via Groq API."/>
+  <title>AI Text Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Animated background blobs ── -->
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="app-wrapper">
+
+    <!-- ── HEADER ── -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">AI Text Generator</span>
+      </div>
+      <p class="tagline">Powered by Llama 3.3 · Groq Cloud</p>
+    </header>
+
+    <!-- ── MAIN GRID ── -->
+    <main class="main-grid">
+
+      <!-- LEFT PANEL: Input + Controls -->
+      <section class="panel input-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Your Prompt</h2>
+          <span class="char-counter" id="charCounter">0 / 2000</span>
+        </div>
+
+        <textarea
+          id="promptInput"
+          class="prompt-textarea"
+          placeholder="Enter your prompt here… e.g. 'Write a professional email requesting a meeting.'"
+          maxlength="2000"
+          rows="8"
+          spellcheck="true"
+        ></textarea>
+
+        <!-- Controls Grid -->
+        <div class="controls-grid">
+
+          <!-- Writing Style -->
+          <div class="control-group">
+            <label class="control-label" for="styleSelect">
+              <span class="label-icon">🎨</span> Writing Style
+            </label>
+            <div class="select-wrapper">
+              <select id="styleSelect" class="styled-select">
+                <option value="Professional">Professional</option>
+                <option value="Formal">Formal</option>
+                <option value="Casual">Casual</option>
+                <option value="Creative">Creative</option>
+                <option value="Story">Story</option>
+              </select>
+              <span class="select-arrow">▾</span>
+            </div>
+          </div>
+
+          <!-- Temperature -->
+          <div class="control-group">
+            <label class="control-label" for="tempSlider">
+              <span class="label-icon">🌡️</span> Temperature
+              <span class="slider-value" id="tempValue">0.7</span>
+            </label>
+            <input
+              type="range"
+              id="tempSlider"
+              class="styled-slider"
+              min="0.1" max="1.0" step="0.05" value="0.7"
+            />
+            <div class="slider-labels"><span>Precise</span><span>Creative</span></div>
+          </div>
+
+          <!-- Max Tokens -->
+          <div class="control-group">
+            <label class="control-label" for="tokenSlider">
+              <span class="label-icon">📏</span> Max Length
+              <span class="slider-value" id="tokenValue">250</span>
+            </label>
+            <input
+              type="range"
+              id="tokenSlider"
+              class="styled-slider"
+              min="50" max="500" step="10" value="250"
+            />
+            <div class="slider-labels"><span>Shorter</span><span>Longer</span></div>
+          </div>
+
+        </div>
+
+        <!-- Primary Action Buttons -->
+        <div class="action-row primary-actions">
+          <button id="generateBtn" class="btn btn-primary" onclick="handleGenerate()">
+            <span class="btn-icon">✦</span> Generate Text
+          </button>
+          <button class="btn btn-danger" onclick="handleClear()">
+            <span class="btn-icon">✕</span> Clear
+          </button>
+        </div>
+
+        <!-- Quick Modification Buttons -->
+        <div class="quick-actions-label">Quick Actions on Output ↓</div>
+        <div class="action-row quick-actions">
+          <button class="btn btn-action" onclick="handleModify('summarize')">
+            <span>✨</span> Summarize
+          </button>
+          <button class="btn btn-action" onclick="handleModify('expand')">
+            <span>🚀</span> Expand
+          </button>
+          <button class="btn btn-action" onclick="handleModify('rewrite')">
+            <span>🔄</span> Rewrite
+          </button>
+          <button class="btn btn-action" onclick="handleModify('continue')">
+            <span>✍️</span> Continue
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: Output -->
+      <section class="panel output-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Generated Output</h2>
+          <div class="output-actions">
+            <button class="icon-btn" id="copyBtn" onclick="handleCopy()" title="Copy to clipboard">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copyLabel">Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loader-wrapper" id="loader">
+          <div class="loader-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <p class="loader-text">Generating with Llama 3.3…</p>
+        </div>
+
+        <!-- Output Text -->
+        <div
+          id="outputBox"
+          class="output-box"
+          aria-live="polite"
+          aria-label="Generated text output"
+        >
+          <div class="output-placeholder">
+            <div class="placeholder-icon">✦</div>
+            <p>Your generated text will appear here.</p>
+            <p class="placeholder-sub">Enter a prompt and click <strong>Generate Text</strong> to get started.</p>
+          </div>
+        </div>
+
+        <!-- Word / Char stats bar -->
+        <div class="stats-bar" id="statsBar" style="display:none;">
+          <span id="wordCount">0 words</span>
+          <span>·</span>
+          <span id="charCount">0 characters</span>
+        </div>
+
+        <!-- Error Toast -->
+        <div class="error-toast" id="errorToast"></div>
+      </section>
+
+    </main>
+
+    <!-- ── FOOTER ── -->
+    <footer class="footer">
+      <p>Built with <span class="heart">♥</span> using Flask · Groq · Llama 3.3 · Vanilla JS</p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
